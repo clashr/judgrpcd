@@ -4,6 +4,9 @@
 *.a
 *.so
 
+# Vim Temp Files
+*.swp
+
 # Folders
 _obj
 _test
