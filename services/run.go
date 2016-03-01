@@ -13,35 +13,34 @@ func Nothing() {
 	log.Printf("Reached services.Nothing endpoint.\n")
 }
 
-func Run(binary []byte, tests []string) (out []string, err error) {
+func Run(binary []byte, tests []string) ([]string, []RunDetails) {
 	log.Printf("Reached Run endpoint.\n")
 
 	origDir, err := os.Getwd()
 	if err != nil {
-		return
+		log.Println(err)
 	}
 
 	tmpDir := os.TempDir()
 
 	if err = os.Chdir(tmpDir); err != nil {
-		log.Print(err)
-		return
+		log.Println(err)
 	}
 
 	fileName := fmt.Sprintf("exec%d", time.Now().Nanosecond)
 	if err = ioutil.WriteFile(filepath.Join(tmpDir, fileName), binary, 0700); err != nil {
-		log.Print(err)
-		return
+		log.Println(err)
 	}
 
 	log.Printf("Judging program.\n")
+	var out []string
+	var runinfo []RunDetails
 	for i, test := range tests {
-		out[i], _ = judge(tmpDir, fileName, test)
+		out[i], runinfo[i] = judge(tmpDir, fileName, test)
 	}
 
 	if err = os.Chdir(origDir); err != nil {
-		log.Print(err)
-		return
+		log.Println(err)
 	}
-	return
+	return out, runinfo
 }
