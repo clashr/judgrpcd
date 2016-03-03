@@ -123,7 +123,7 @@ func restoreenv(pairs map[string]string) {
 func limMem(pid int, rlimit *syscall.Rlimit) error {
 	log.Println("Unsafe memory limiting.")
 	_, _, errno := syscall.RawSyscall6(syscall.SYS_PRLIMIT64, uintptr(pid),
-		syscall.RLIMIT_AS, uintptr(unsafe.Pointer(rlimit)), 0, 0, 0)
+		syscall.RLIMIT_DATA, uintptr(unsafe.Pointer(rlimit)), 0, 0, 0)
 	log.Println("Unsafe memory limiting success.")
 	var err error
 	if errno != 0 {

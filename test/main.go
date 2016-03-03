@@ -28,6 +28,6 @@ func main() {
 		log.Fatalf("Error in running: %s", err)
 	}
 	//Print out the result
-	log.Printf("Mem Used: %s\nTime Used: %s\n", result.Data[0].TotalMem,
+	log.Printf("Mem Used: %dKB\nTime Used: %s\n", result.Data[0].TotalMem,
 		result.Data[0].TotalTime)
 }
