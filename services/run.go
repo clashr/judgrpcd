@@ -33,8 +33,8 @@ func Run(binary []byte, tests []string) ([]string, []RunDetails) {
 	}
 
 	log.Printf("Judging program.\n")
-	var out []string
-	var runinfo []RunDetails
+	out := make([]string, len(tests))
+	runinfo := make([]RunDetails, len(tests))
 	for i, test := range tests {
 		out[i], runinfo[i] = judge(tmpDir, fileName, test)
 	}

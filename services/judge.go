@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -29,14 +30,23 @@ func judge(wd, executable string, testcase string) (string, RunDetails) {
 	//ns := cgroup.NewCgroup(fmt.Sprintf("/judgrpcd/%d", exec))
 	//ns.Create()
 
+	log.Println("Writing Test File to Disk.")
 	ioutil.WriteFile(filepath.Join(wd, "data.txt"), []byte(testcase), 0600)
 	env := backupenv()
 	os.Clearenv()
 
-	cmd := exec.Command(executable)
+	log.Println("Starting Executable.")
+	elf := fmt.Sprintf("./%s", executable)
+	cmd := exec.Command(elf)
+	if err := cmd.Start(); err != nil {
+		log.Println(err)
+	}
 	var rlimit syscall.Rlimit
 	rlimit.Cur = 1024 * 10000 // Provide 10MB of RAM
 	rlimit.Max = 1024 * 10001
+	log.Println("Limiting Memory to 10MB.")
+	log.Printf("New process %s\n", cmd.Process)
+	log.Printf("New process pid %d\n", cmd.Process.Pid)
 	limMem(cmd.Process.Pid, &rlimit)
 
 	var details RunDetails
@@ -44,6 +54,7 @@ func judge(wd, executable string, testcase string) (string, RunDetails) {
 	go func() {
 		done <- cmd.Wait()
 	}()
+	log.Println("Executable Running... ")
 	select {
 	case <-time.After(5 * time.Minute): // Limit runtime to 5 minutes
 		if err := cmd.Process.Kill(); err != nil {
@@ -66,6 +77,7 @@ func judge(wd, executable string, testcase string) (string, RunDetails) {
 			details.Exit = 0
 		}
 	}
+	log.Println("Successful Run")
 
 	details.TSys = cmd.ProcessState.SystemTime()
 	details.TUser = cmd.ProcessState.UserTime()
@@ -109,8 +121,10 @@ func restoreenv(pairs map[string]string) {
 }
 
 func limMem(pid int, rlimit *syscall.Rlimit) error {
+	log.Println("Unsafe memory limiting.")
 	_, _, errno := syscall.RawSyscall6(syscall.SYS_PRLIMIT64, uintptr(pid),
 		syscall.RLIMIT_AS, uintptr(unsafe.Pointer(rlimit)), 0, 0, 0)
+	log.Println("Unsafe memory limiting success.")
 	var err error
 	if errno != 0 {
 		err = errno
