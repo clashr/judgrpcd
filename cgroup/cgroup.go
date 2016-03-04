@@ -95,6 +95,8 @@ func Create(cgroupname, cpuset string, memsize int64) (Cgroup, error) {
 	param = C.CString("memory.memsw.limit_in_bytes")
 	C.cgroup_add_value_int64(cgController, param, mem)
 
+	// Setup CPU restrictions. The task is pinned to a specific set of CPUs
+	// if a non-empty string is passed.
 	if len(cpuset) > 0 {
 		param = C.CString("cpuset")
 		cgController = C.cgroup_add_controller(cg, param)
@@ -106,6 +108,13 @@ func Create(cgroupname, cpuset string, memsize int64) (Cgroup, error) {
 		param = C.CString("cpuset.cpus")
 		arg = C.CString(cpuset)
 		C.cgroup_add_value_string(cgController, param, arg)
+	}
+
+	// Perform the creation of the cgroup.
+	if ret := C.cgroup_create_cgroup(cg, 1); ret != 0 {
+		err := fmt.Errorf("Creating cgroup: %s(%d)",
+			C.cgroup_stderror(ret), ret)
+		return Cgroup{}, err
 	}
 	return Cgroup{cgroupname, cpuset, memsize}, nil
 }
