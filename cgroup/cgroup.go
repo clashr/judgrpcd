@@ -30,6 +30,8 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"syscall"
+	"unsafe"
 )
 
 // A uniform interface for the cgroup actions.
@@ -143,5 +145,52 @@ func (g *Cgroup) Attach(p int) error {
 		return err
 	}
 
+	return nil
+}
+
+// Kill sends SIGKILL(9) to all PIDs associated with the given cgroup.
+func (g *Cgroup) Kill() error {
+	cgName := C.CString(g.name)
+	cgCtrl := C.CString("memory")
+
+	var pid C.pid_t
+	var handle unsafe.Pointer
+
+	for {
+		ret := C.cgroup_get_task_begin(cgName, cgCtrl, &handle, &pid)
+		C.cgroup_get_task_end(&handle)
+		if ret == C.ECGEOF {
+			break
+		}
+		if err := syscall.Kill(int(pid), syscall.SIGKILL); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Delete removes the cgroup from the kernel.
+func (g *Cgroup) Delete() error {
+	var param *C.char
+
+	param = C.CString(g.name)
+	cg := C.cgroup_new_cgroup(param)
+	if cg == nil {
+		err := fmt.Errorf("cgroup_new_cgroup")
+		return err
+	}
+
+	if ret := C.cgroup_get_cgroup(cg); ret != 0 {
+		err := fmt.Errorf("Get cgroup information: %s(%d)",
+			C.cgroup_strerror(ret), ret)
+		return err
+	}
+
+	// Clean up the cgroup
+	if ret := C.cgroup_delete_cgroup(cg, 1); ret != 0 {
+		err := fmt.Errorf("Deleteing cgroup: %s(%d)",
+			C.cgroup_strerror(ret), ret)
+		return err
+	}
 	return nil
 }
