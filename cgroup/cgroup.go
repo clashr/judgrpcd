@@ -15,8 +15,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with Clashr.  If not, see <http://www.gnu.org/licenses/>.
-//
-//
+
 // Package cgroup provides a large amount of functionality for properly
 // implementing cgroups in the judging and tracking of programs in Clashr.
 // Most of this work is inspired by the DOMJudge implementation runguard.c and
