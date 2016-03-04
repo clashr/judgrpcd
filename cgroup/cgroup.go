@@ -41,6 +41,16 @@ type Cgroup struct {
 	mems int64
 }
 
+// Init must be called for the cgroup library to be avaliable.
+func Init() error {
+	if res := C.cgroup_init(); res != 0 {
+		err := fmt.Errorf("Could not cgroup_init %s(%d)",
+			C.cgroup_strerror(res), res)
+		return err
+	}
+	return nil
+}
+
 // OutputStats returns the memory used (in bytes) by a process controlled by a
 // cgroup.
 func (g *Cgroup) OutputStats() (int64, error) {
