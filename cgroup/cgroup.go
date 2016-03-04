@@ -113,8 +113,35 @@ func Create(cgroupname, cpuset string, memsize int64) (Cgroup, error) {
 	// Perform the creation of the cgroup.
 	if ret := C.cgroup_create_cgroup(cg, 1); ret != 0 {
 		err := fmt.Errorf("Creating cgroup: %s(%d)",
-			C.cgroup_stderror(ret), ret)
+			C.cgroup_strerror(ret), ret)
 		return Cgroup{}, err
 	}
 	return Cgroup{cgroupname, cpuset, memsize}, nil
+}
+
+// Attach attaches a task with PID p to the cgroup.
+func (g *Cgroup) Attach(p int) error {
+	var param *C.char
+
+	param = C.CString(g.name)
+	cg := C.cgroup_new_cgroup(param)
+	if cg != nil {
+		return errors.New("cgroup_new_cgroup")
+	}
+	defer C.cgroup_free(&cg)
+
+	if ret := C.cgroup_get_cgroup(cg); ret != 0 {
+		err := fmt.Errorf("Get cgroup information: %s(d)",
+			C.cgroup_strerror(ret), ret)
+		return err
+	}
+
+	// Attach task to the cgroup
+	if ret := C.cgroup_attach_task_pid(cg, C.pid_t(p)); ret != 0 {
+		err := fmt.Errorf("Attach task to cgroup: %s(%d)",
+			C.cgroup_strerror(ret), ret)
+		return err
+	}
+
+	return nil
 }
