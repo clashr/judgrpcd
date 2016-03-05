@@ -33,19 +33,25 @@ func init() {
 
 func main() {
 	judge := new(api.Judge)
-	err := rpc.Register(judge)
-	if err != nil {
+
+	server := rpc.NewServer()
+	if err := server.Register(judge); err != nil {
 		log.Fatalf("Format of service builder isn't correct. %s", err)
 	}
-	rpc.HandleHTTP()
+
 	//start listening for messages on port 1234
 	l, err := net.Listen("tcp", ":1234")
 	if err != nil {
 		log.Fatalf("Couldn't start listening on port 1234. Error %s", err)
 	}
+
 	log.Println("Serving RPC handler")
-	err = http.Serve(l, nil)
-	if err != nil {
-		log.Fatalf("Error serving: %s", err)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			log.Fatalf("Error serving: %s", err)
+		}
+
+		go server.ServeConn(conn)
 	}
 }
