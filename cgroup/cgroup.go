@@ -43,9 +43,9 @@ type Cgroup struct {
 
 // Init must be called for the cgroup library to be avaliable.
 func Init() error {
-	if res := C.cgroup_init(); res != 0 {
-		err := fmt.Errorf("Could not cgroup_init %s(%d)",
-			C.cgroup_strerror(res), res)
+	if ret := C.cgroup_init(); ret != 0 {
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Could not cgroup_init %s(%d)", desc, ret)
 		return err
 	}
 	return nil
@@ -64,8 +64,8 @@ func (g *Cgroup) OutputStats() (int64, error) {
 	defer C.cgroup_free(&cg)
 
 	if ret := C.cgroup_get_cgroup(cg); ret != 0 {
-		err := fmt.Errorf("Get cgroup information: %s(d)",
-			C.cgroup_strerror(ret), ret)
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Get cgroup information: %s(d)", desc, ret)
 		return 0, err
 	}
 	param = C.CString("memory")
@@ -74,8 +74,8 @@ func (g *Cgroup) OutputStats() (int64, error) {
 	var maxUsage C.int64_t
 	param = C.CString("memory.memsw.max_usage_in_bytes")
 	if ret := C.cgroup_get_value_int64(cgController, param, &maxUsage); ret != 0 {
-		err := fmt.Errorf("Get cgroup value: %s(%d)",
-			C.cgroup_strerror(ret), ret)
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Get cgroup value: %s(%d)", desc, ret)
 		return 0, err
 	}
 
@@ -124,8 +124,8 @@ func Create(cgroupname, cpuset string, memsize int64) (Cgroup, error) {
 
 	// Perform the creation of the cgroup.
 	if ret := C.cgroup_create_cgroup(cg, 1); ret != 0 {
-		err := fmt.Errorf("Creating cgroup: %s(%d)",
-			C.cgroup_strerror(ret), ret)
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Creating cgroup: %s(%d)", desc, ret)
 		return Cgroup{}, err
 	}
 	return Cgroup{cgroupname, cpuset, memsize}, nil
@@ -137,21 +137,21 @@ func (g *Cgroup) Attach(p int) error {
 
 	param = C.CString(g.name)
 	cg := C.cgroup_new_cgroup(param)
-	if cg != nil {
+	if cg == nil {
 		return errors.New("cgroup_new_cgroup")
 	}
 	defer C.cgroup_free(&cg)
 
 	if ret := C.cgroup_get_cgroup(cg); ret != 0 {
-		err := fmt.Errorf("Get cgroup information: %s(d)",
-			C.cgroup_strerror(ret), ret)
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Get cgroup information: %s(d)", desc, ret)
 		return err
 	}
 
 	// Attach task to the cgroup
 	if ret := C.cgroup_attach_task_pid(cg, C.pid_t(p)); ret != 0 {
-		err := fmt.Errorf("Attach task to cgroup: %s(%d)",
-			C.cgroup_strerror(ret), ret)
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Attach task to cgroup: %s(%d)", desc, ret)
 		return err
 	}
 
@@ -191,15 +191,15 @@ func (g *Cgroup) Delete() error {
 	}
 
 	if ret := C.cgroup_get_cgroup(cg); ret != 0 {
-		err := fmt.Errorf("Get cgroup information: %s(%d)",
-			C.cgroup_strerror(ret), ret)
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Get cgroup information: %s(%d)", desc, ret)
 		return err
 	}
 
 	// Clean up the cgroup
 	if ret := C.cgroup_delete_cgroup(cg, 1); ret != 0 {
-		err := fmt.Errorf("Deleteing cgroup: %s(%d)",
-			C.cgroup_strerror(ret), ret)
+		desc := C.GoString(C.cgroup_strerror(ret))
+		err := fmt.Errorf("Deleteing cgroup: %s(%d)", desc, ret)
 		return err
 	}
 	return nil
