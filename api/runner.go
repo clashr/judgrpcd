@@ -33,6 +33,7 @@ func runner(args Args, result *Result) error {
 	}
 
 	output, runDetails := services.Run(args.Binary, input)
+	score := services.Grade(runDetails, input)
 
 	sysinfo := make([]Usage, len(args.TestData))
 	for i, run := range runDetails {
@@ -47,6 +48,6 @@ func runner(args Args, result *Result) error {
 			pass[i] = true
 		}
 	}
-	*result = Result{pass, 0, sysinfo}
+	*result = Result{pass, score, sysinfo}
 	return nil
 }

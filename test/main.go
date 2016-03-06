@@ -29,14 +29,14 @@ import (
 
 func main() {
 	//make connection to rpc server
-	client, err := rpc.DialHTTP("tcp", ":1234")
+	client, err := rpc.Dial("tcp", ":1234")
 	if err != nil {
 		log.Fatalf("Error in dialing. %s", err)
 	}
 	//make arguments object
 	bin, err := ioutil.ReadFile("a.out")
 
-	tests := make([]api.Test, 3)
+	tests := make([]api.Test, 1)
 	tests[0] = api.Test{"asdf", ""}
 
 	args := &api.Args{"c", bin, tests}
@@ -47,6 +47,6 @@ func main() {
 		log.Fatalf("Error in running: %s", err)
 	}
 	//Print out the result
-	log.Printf("Mem Used: %dKB\nTime Used: %s\n", result.Data[0].TotalMem,
-		result.Data[0].TotalTime)
+	log.Printf("Mem Used: %dKB\nTime Used: %s\nScore: %d\n", result.Data[0].TotalMem,
+		result.Data[0].TotalTime, result.Score)
 }

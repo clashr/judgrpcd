@@ -22,7 +22,6 @@ package main
 import (
 	"log"
 	"net"
-	"net/http"
 	"net/rpc"
 
 	"github.com/clashr/judgrpcd/api"
