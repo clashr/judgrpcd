@@ -107,14 +107,23 @@ func judge(wd, executable string, testcase string) (string, RunDetails) {
 	readBuffer := make([]byte, 1000)
 	outFile, err := os.Open(filepath.Join(wd, "output.txt"))
 	if err != nil {
-		log.Println(err)
+		if os.IsExist(err) {
+			log.Println(err)
+		}
+		outFile = nil
 	}
 	_, err = outFile.Read(readBuffer)
 	if err != io.EOF {
 		log.Println(err)
 	}
 
+	os.Clearenv()
 	restoreenv(env)
+
+	log.Println("Test run cleanup.")
+	os.Remove("data.txt")
+	os.Remove("output.txt")
+	os.Remove(executable)
 
 	return string(readBuffer), details
 }
